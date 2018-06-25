@@ -17,7 +17,7 @@ const int MQTT_SERVER_PORT = 8883;
  * ...
  * "-----END CERTIFICATE-----\n";
  */
-const char SSL_CA_PEM[] = NULL;
+const char* SSL_CA_PEM = NULL;
 
 /*
  * (optional) Client certificate here in PEM format.
