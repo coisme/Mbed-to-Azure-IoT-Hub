@@ -41,6 +41,9 @@
             "platform.stdio-baud-rate": 115200,
             "platform.stdio-convert-newlines": false
            },
+        "RZ_A1H": {
+            "target.macros_add": ["MBEDTLS_TEST_NULL_ENTROPY", "MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES"]
+           },
         "HEXIWEAR": {
             "esp8266-tx": "PTD3",
             "esp8266-rx": "PTD2"
