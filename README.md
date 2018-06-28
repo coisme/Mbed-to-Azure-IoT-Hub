@@ -1,5 +1,5 @@
-# Mbed-to-AWS-IoT
-Mbed example program connecting to AWS IoT with MQTT over TLS.
+# Mbed-to-Google-Cloud-IoT
+Mbed example program connecting to Google Cloud IoT Core with MQTT over TLS.
 
-Visit [AWS IoT from Mbed OS device](https://os.mbed.com/users/coisme/notebook/aws-iot-from-mbed-os-device/) page for detail instruction.
+Visit [Google Cloud IoT from Mbed OS device](https://os.mbed.com/users/coisme/notebook/google-cloud-iot-from-mbed-os-device/) page for detail instruction.
 
