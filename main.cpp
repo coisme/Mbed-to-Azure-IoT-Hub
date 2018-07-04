@@ -268,10 +268,9 @@ int getPassword(char *buf, size_t buf_size) {
     size_t len = 0;
     time_t now = time(NULL);
 
-    JwtGenerator jwtgen;
-    jwtgen.setPrivateKey(SSL_CLIENT_PRIVATE_KEY_PEM);
-    if(jwtgen.getJwt(buf, buf_size, &len, GOOGLE_PROJECT_ID, now, now + TIME_JWT_EXP)
-             == JwtGenerator::SUCCESS) {
+//    jwtgen.setPrivateKey(SSL_CLIENT_PRIVATE_KEY_PEM);
+    if(JwtGenerator::getJwt(buf, buf_size, &len, SSL_CLIENT_PRIVATE_KEY_PEM,
+            GOOGLE_PROJECT_ID, now, now + TIME_JWT_EXP) == JwtGenerator::SUCCESS) {
         buf[len] = '\0';
         ret = 0;
     }

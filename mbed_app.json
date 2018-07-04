@@ -22,10 +22,10 @@
             "value": "D0"
         },
         "wifi-ssid": {
-            "value": "\"ssid\""
+            "value": "\"SSID\""
         },
         "wifi-password": {
-            "value": "\"password\""
+            "value": "\"PASSWORD\""
         },
         "esp8266-debug": {
             "value": null
