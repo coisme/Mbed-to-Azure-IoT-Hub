@@ -35,8 +35,6 @@
 #include "MQTT_server_setting.h"
 #include "mbed-trace/mbed_trace.h"
 #include "mbed_events.h"
-#include "NTPClient.h"
-#include "jwtgen.h"
 
 #define MQTT_MAX_CONNECTIONS     5
 #define MQTT_MAX_PACKET_SIZE  1024
@@ -59,7 +57,6 @@ const int MESSAGE_BUFFER_SIZE = 1024;
 char messageBuffer[MESSAGE_BUFFER_SIZE];
 
 // Function prototypes
-int getPassword(char *buf, size_t buf_size);
 void handleMqttMessage(MQTT::MessageData& md);
 void handleButtonRise();
 
@@ -76,7 +73,7 @@ int main(int argc, char* argv[])
     DigitalOut led_green(LED_GREEN, LED_OFF);
     DigitalOut led_blue(LED_BLUE, LED_OFF);
 
-    printf("Mbed to Google IoT Cloud: version is %.2f\r\n", version);
+    printf("Mbed to Azure IoT Hub: version is %.2f\r\n", version);
     printf("\r\n");
 
     // Turns on green LED to indicate processing initialization process
@@ -93,22 +90,6 @@ int main(int argc, char* argv[])
     printf("Network interface opened successfully.\r\n");
     printf("\r\n");
 
-
-    /* NTP - Get the current time. Required to generate JWT. */
-    NTPClient ntp(network);
-    ntp.set_server("time.google.com", 123);
-    time_t now = ntp.get_timestamp();
-    set_time(now);
-
-    /* JWT - Set JWT as password.  */
-    const int buf_size = 1024;
-    char* password = new char[buf_size];
-    if(getPassword(password, buf_size) != 0) {
-        printf("ERROR: Failed to generate JWT.\r\n");
-        return -1;
-    }
-    printf("JWT:\r\n%s\r\n\r\n", password);
-
     /* Establish a network connection. */
     MQTTNetwork* mqttNetwork = NULL;
     printf("Connecting to host %s:%d ...\r\n", MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT);
@@ -124,10 +105,8 @@ int main(int argc, char* argv[])
     printf("Connection established.\r\n");
     printf("\r\n");
 
-    // Generates MQTT cliend ID from user's parameter in MQTT_server_setting.h
-    std::string mqtt_client_id = 
-            std::string{"projects/"} + GOOGLE_PROJECT_ID + "/locations/"
-            + GOOGLE_REGION + "/registries/" + GOOGLE_REGISTRY + "/devices/" + GOOGLE_DEVICE_ID;
+    // Generate username from host name and client id.
+    std::string username = std::string(MQTT_SERVER_HOST_NAME) + "/" + DEVICE_ID + "/api-version=2016-11-14";
 
     /* Establish a MQTT connection. */
     MQTT::Client<MQTTNetwork, Countdown, MQTT_MAX_PACKET_SIZE, MQTT_MAX_CONNECTIONS>* mqttClient = NULL;
@@ -135,9 +114,9 @@ int main(int argc, char* argv[])
     {
         MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
         data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
-        data.clientID.cstring = (char *)mqtt_client_id.c_str();
-        data.username.cstring = (char *)"ignored";
-        data.password.cstring = (char *)password;
+        data.clientID.cstring = (char*)DEVICE_ID;
+        data.username.cstring = (char*)username.c_str();
+        data.password.cstring = (char *)"ignored";
 
         mqttClient = new MQTT::Client<MQTTNetwork, Countdown, MQTT_MAX_PACKET_SIZE, MQTT_MAX_CONNECTIONS>(*mqttNetwork);
         int rc = mqttClient->connect(data);
@@ -154,10 +133,11 @@ int main(int argc, char* argv[])
 
 
     // Generates topic names from user's setting in MQTT_server_setting.h
+    //devices/{device_id}/messages/events/
     std::string mqtt_topic_pub = 
-            std::string{"/devices/"} + GOOGLE_DEVICE_ID + "/events";
+            std::string{"devices/"} + DEVICE_ID + "/messages/events/";
     std::string mqtt_topic_sub =
-            std::string{"/devices/"} + GOOGLE_DEVICE_ID + "/config";
+            std::string{"devices/"} + DEVICE_ID + "/messages/devicebound/#";
 
     /* Subscribe a topic. */
     bool isSubscribed = false;
@@ -179,11 +159,6 @@ int main(int argc, char* argv[])
     
     printf("To send a packet, push the button 1 on your board.\r\n");
 
-    // Compose a message for the first time.
-    std::string initStr = std::string{"{\"cloudRegion\":\""} + GOOGLE_REGION + "\",\"deviceId\":\"" 
-                + GOOGLE_DEVICE_ID + ",\"registryId\":\"" + GOOGLE_REGISTRY + "\",\"hops\":1}"; 
-    char* buf = (char*)initStr.c_str();
-
     /* Main loop */
     while(1) {
         /* Client is disconnected. */
@@ -198,16 +173,12 @@ int main(int argc, char* argv[])
         if(isMessageArrived) {
             isMessageArrived = false;
             printf("\r\nMessage arrived:\r\n%s\r\n", messageBuffer);
-            // Save the message to resend when the button is pushed.
-            buf = messageBuffer;
         }
         /* Button is pushed - publish a message. */
         if(isPublish) {
             isPublish = false;
             static unsigned int id = 0;
             static unsigned int count = 0;
-
-            count++;
 
             // When sending a message, blue LED lights.
             led_blue = LED_ON;
@@ -216,6 +187,9 @@ int main(int argc, char* argv[])
             message.retained = false;
             message.dup = false;
 
+            const size_t len = 128;
+            char buf[len];
+            snprintf(buf, len, "Message #%d from %s.", count, DEVICE_ID);
             message.payload = (void*)buf;
 
             message.qos = MQTT::QOS0;
@@ -228,6 +202,8 @@ int main(int argc, char* argv[])
                 printf("ERROR: rc from MQTT publish is %d\r\n", rc);
             }
             printf("Message published.\r\n");
+
+            count++;
 
             led_blue = LED_OFF;
         }
@@ -255,25 +231,6 @@ int main(int argc, char* argv[])
 
     // Turn on the red LED when the program is done.
     led_red = LED_ON;
-}
-
-/* 
- * Creates a password string (JWT) to connect Google Cloud IoT Core. 
- * @param buf Pointer to the buffer stores password string followed by terminate character, '\0'. 
- * @param buf_size Size of the buffer in bytes.
- * @return 0 when success, otherwise != 0
- */
-int getPassword(char *buf, size_t buf_size) {
-    int ret = -1;
-    size_t len = 0;
-    time_t now = time(NULL);
-
-    if(JwtGenerator::getJwt(buf, buf_size - 1, &len, SSL_CLIENT_PRIVATE_KEY_PEM,
-            GOOGLE_PROJECT_ID, now, now + TIME_JWT_EXP) == JwtGenerator::SUCCESS) {
-        buf[len] = '\0';
-        ret = 0;
-    }
-    return ret;
 }
 
 /*
