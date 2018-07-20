@@ -135,9 +135,9 @@ int main(int argc, char* argv[])
     // Generates topic names from user's setting in MQTT_server_setting.h
     //devices/{device_id}/messages/events/
     std::string mqtt_topic_pub = 
-            std::string{"devices/"} + DEVICE_ID + "/messages/events/";
+            std::string("devices/") + DEVICE_ID + "/messages/events/";
     std::string mqtt_topic_sub =
-            std::string{"devices/"} + DEVICE_ID + "/messages/devicebound/#";
+            std::string("devices/") + DEVICE_ID + "/messages/devicebound/#";
 
     /* Subscribe a topic. */
     bool isSubscribed = false;
