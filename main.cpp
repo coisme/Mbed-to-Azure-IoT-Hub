@@ -35,6 +35,7 @@
 #include "MQTT_server_setting.h"
 #include "mbed-trace/mbed_trace.h"
 #include "mbed_events.h"
+#include "NTPClient.h"
 
 #define MQTT_MAX_CONNECTIONS     5
 #define MQTT_MAX_PACKET_SIZE  1024
@@ -89,6 +90,13 @@ int main(int argc, char* argv[])
     }
     printf("Network interface opened successfully.\r\n");
     printf("\r\n");
+
+    // sync the real time clock (RTC)
+    NTPClient ntp(network);
+    ntp.set_server("time.google.com", 123);
+    time_t now = ntp.get_timestamp();
+    set_time(now);
+    printf("Time is now %s", ctime(&now));
 
     /* Establish a network connection. */
     MQTTNetwork* mqttNetwork = NULL;
