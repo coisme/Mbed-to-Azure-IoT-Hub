@@ -1,5 +1,8 @@
 {
     "macros": [
+        "MBED_HEAP_STATS_ENABLED=1",
+        "MBED_STACK_STATS_ENABLED=1",
+        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1"
     ],
     "config": {
         "main-stack-size": {
@@ -10,7 +13,7 @@
         "*": {
             "platform.stdio-baud-rate"                  : 115200,
             "platform.stdio-convert-newlines"           : true,
-            "mbed-trace.enable"                         : null,
+            "mbed-trace.enable"                         : true,
             "nsapi.default-wifi-security"               : "WPA_WPA2",
             "nsapi.default-wifi-ssid"                   : "\"yolo 5GHz\"",
             "nsapi.default-wifi-password"               : "\"0624710192\""
@@ -20,6 +23,7 @@
             "target.network-default-interface-type"     : "ETHERNET"
         },
         "DISCO_L475VG_IOT01A": {
+            "target.macros_remove"                      : ["MBED_TICKLESS"],
             "target.components_add"                     : ["WIFI_ISM43362"],
             "target.network-default-interface-type"     : "WIFI"
         },

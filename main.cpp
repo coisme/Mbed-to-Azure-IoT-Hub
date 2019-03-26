@@ -29,6 +29,7 @@
 #define MQTTCLIENT_QOS2 0
 
 #include "mbed.h"
+#include "mbed_stats.h"
 #include "MQTTNetwork.h"
 #include "MQTTmbed.h"
 #include "MQTTClient.h"
@@ -62,6 +63,23 @@ char messageBuffer[MESSAGE_BUFFER_SIZE];
 void handleMqttMessage(MQTT::MessageData& md);
 void handleButtonRise();
 
+void print_memory_info() {
+    // allocate enough room for every thread's stack statistics
+    int cnt = osThreadGetCount();
+    mbed_stats_stack_t *stats = (mbed_stats_stack_t*) malloc(cnt * sizeof(mbed_stats_stack_t));
+
+    cnt = mbed_stats_stack_get_each(stats, cnt);
+    for (int i = 0; i < cnt; i++) {
+        printf("Thread: 0x%lX, Stack size: %lu / %lu\r\n", stats[i].thread_id, stats[i].max_size, stats[i].reserved_size);
+    }
+    free(stats);
+
+    // Grab the heap statistics
+    mbed_stats_heap_t heap_stats;
+    mbed_stats_heap_get(&heap_stats);
+    printf("Heap size: %lu / %lu bytes (max: %lu bytes)\r\n", heap_stats.current_size, heap_stats.reserved_size, heap_stats.max_size);
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -71,12 +89,14 @@ int main(int argc, char* argv[])
 
     NetworkInterface* network = NULL;
 
-    DigitalOut led_red(LED_RED, LED_OFF);
-    DigitalOut led_green(LED_GREEN, LED_OFF);
-    DigitalOut led_blue(LED_BLUE, LED_OFF);
+    DigitalOut led_red(LED1, LED_OFF);
+    DigitalOut led_green(LED2, LED_OFF);
+    DigitalOut led_blue(LED3, LED_OFF);
 
     printf("Mbed to Azure IoT Hub: version is %.2f\r\n", version);
     printf("\r\n");
+
+    print_memory_info();
 
     // Turns on green LED to indicate processing initialization process
     led_green = LED_ON;
@@ -90,19 +110,23 @@ int main(int argc, char* argv[])
     }
 
     nsapi_error_t net_status = NSAPI_ERROR_NO_CONNECTION;
-    while ((net_status = net->connect()) != NSAPI_ERROR_OK) {
+    while ((net_status = network->connect()) != NSAPI_ERROR_OK) {
         printf("Unable to connect to network (%d). Retrying...\r\n", net_status);
     }
 
-    printf("Connected to the network successfully. IP address: %s\r\n", net->get_ip_address());
+    printf("Connected to the network successfully. IP address: %s\r\n", network->get_ip_address());
     printf("\r\n");
 
     // sync the real time clock (RTC)
-    NTPClient ntp(network);
-    ntp.set_server("time.google.com", 123);
-    time_t now = ntp.get_timestamp();
-    set_time(now);
-    printf("Time is now %s", ctime(&now));
+    {
+        NTPClient ntp(network);
+        ntp.set_server("time.google.com", 123);
+        time_t now = ntp.get_timestamp();
+        set_time(now);
+        printf("Time is now %s", ctime(&now));
+    }
+
+    // print_memory_info();
 
     /* Establish a network connection. */
     MQTTNetwork* mqttNetwork = NULL;
@@ -180,7 +204,7 @@ int main(int argc, char* argv[])
     printf("\r\n");
 
     // Enable button 1 for publishing a message.
-    InterruptIn btn1 = InterruptIn(BUTTON1);
+    InterruptIn btn1(BUTTON1);
     btn1.rise(handleButtonRise);
 
     printf("To send a packet, push the button 1 on your board.\r\n");
