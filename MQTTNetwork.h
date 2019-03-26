@@ -2,7 +2,6 @@
 #define _MQTTNETWORK_H_
 
 #include "NetworkInterface.h"
-
 #include "TLSSocket.h"
 
 class MQTTNetwork {

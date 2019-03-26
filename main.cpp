@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
         printf("Time is now %s", ctime(&now));
     }
 
-    // print_memory_info();
+    print_memory_info();
 
     /* Establish a network connection. */
     MQTTNetwork* mqttNetwork = NULL;
@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
         data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
         data.clientID.cstring = (char*)DEVICE_ID;
         data.username.cstring = (char*)username.c_str();
-        data.password.cstring = (char *)"ignored";
+        data.password.cstring = (char*)"ignored";
 
         mqttClient = new MQTT::Client<MQTTNetwork, Countdown, MQTT_MAX_PACKET_SIZE, MQTT_MAX_CONNECTIONS>(*mqttNetwork);
         int rc = mqttClient->connect(data);
@@ -254,6 +254,8 @@ int main(int argc, char* argv[])
             printf("Message published.\r\n");
 
             count++;
+
+            print_memory_info();
 
             led_blue = LED_OFF;
         }

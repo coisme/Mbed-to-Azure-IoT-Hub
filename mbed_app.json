@@ -2,7 +2,8 @@
     "macros": [
         "MBED_HEAP_STATS_ENABLED=1",
         "MBED_STACK_STATS_ENABLED=1",
-        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1"
+        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1",
+        "MBEDTLS_SHA1_C"
     ],
     "config": {
         "main-stack-size": {
