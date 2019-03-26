@@ -28,7 +28,7 @@
 #define MQTTCLIENT_QOS1 0
 #define MQTTCLIENT_QOS2 0
 
-#include "easy-connect.h"
+#include "mbed.h"
 #include "MQTTNetwork.h"
 #include "MQTTmbed.h"
 #include "MQTTClient.h"
@@ -44,7 +44,7 @@
 #define TIME_JWT_EXP      (60*60*24)  // 24 hours (MAX)
 
 // LED on/off - This could be different among boards
-#define LED_ON  0    
+#define LED_ON  0
 #define LED_OFF 1
 
 #include <string>
@@ -66,7 +66,7 @@ void handleButtonRise();
 int main(int argc, char* argv[])
 {
     mbed_trace_init();
-    
+
     const float version = 0.1;
 
     NetworkInterface* network = NULL;
@@ -82,14 +82,19 @@ int main(int argc, char* argv[])
     led_green = LED_ON;
 
     printf("Opening network interface...\r\n");
-    {
-        network = easy_connect(true);    // If true, prints out connection details.
-        if (!network) {
-            printf("Unable to open network interface.\r\n");
-            return -1;
-        }
+
+    network = NetworkInterface::get_default_instance();
+    if (!network) {
+        printf("Unable to open network interface.\r\n");
+        return -1;
     }
-    printf("Network interface opened successfully.\r\n");
+
+    nsapi_error_t net_status = NSAPI_ERROR_NO_CONNECTION;
+    while ((net_status = net->connect()) != NSAPI_ERROR_OK) {
+        printf("Unable to connect to network (%d). Retrying...\r\n", net_status);
+    }
+
+    printf("Connected to the network successfully. IP address: %s\r\n", net->get_ip_address());
     printf("\r\n");
 
     // sync the real time clock (RTC)
@@ -155,7 +160,7 @@ int main(int argc, char* argv[])
 
     // Generates topic names from user's setting in MQTT_server_setting.h
     //devices/{device_id}/messages/events/
-    std::string mqtt_topic_pub = 
+    std::string mqtt_topic_pub =
             std::string("devices/") + DEVICE_ID + "/messages/events/";
     std::string mqtt_topic_sub =
             std::string("devices/") + DEVICE_ID + "/messages/devicebound/#";
@@ -177,13 +182,13 @@ int main(int argc, char* argv[])
     // Enable button 1 for publishing a message.
     InterruptIn btn1 = InterruptIn(BUTTON1);
     btn1.rise(handleButtonRise);
-    
+
     printf("To send a packet, push the button 1 on your board.\r\n");
 
     /* Main loop */
     while(1) {
         /* Client is disconnected. */
-        if(!mqttClient->isConnected()){        
+        if(!mqttClient->isConnected()){
             break;
         }
         /* Waits a message and handles keepalive. */
@@ -237,7 +242,7 @@ int main(int argc, char* argv[])
             mqttClient->unsubscribe(mqtt_topic_sub.c_str());
             mqttClient->setMessageHandler(mqtt_topic_sub.c_str(), 0);
         }
-        if(mqttClient->isConnected()) 
+        if(mqttClient->isConnected())
             mqttClient->disconnect();
         delete mqttClient;
     }
