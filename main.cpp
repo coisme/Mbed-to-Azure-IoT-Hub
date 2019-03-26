@@ -20,7 +20,6 @@
 #define MQTTCLIENT_QOS2 0
 
 #include "mbed.h"
-#include "mbed_stats.h"
 #include "MQTTNetwork.h"
 #include "MQTTmbed.h"
 #include "MQTTClient.h"
@@ -104,7 +103,6 @@ int main(int argc, char* argv[])
         mqttNetwork = new MQTTNetwork(network);
         int rc = mqttNetwork->connect(MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT, SSL_CA_PEM,
                 SSL_CLIENT_CERT_PEM, SSL_CLIENT_PRIVATE_KEY_PEM);
-        printf("mqttNetwork->connect %d\n", rc);
         if (rc != MQTT::SUCCESS){
             const int MAX_TLS_ERROR_CODE = -0x1000;
             // Network error
