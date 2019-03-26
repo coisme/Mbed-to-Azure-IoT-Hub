@@ -59,8 +59,10 @@ public:
         ret = socket->set_root_ca_cert(ssl_ca_pem);
         if (ret != NSAPI_ERROR_OK) return ret;
 
-        ret = socket->set_client_cert_key(ssl_cli_pem, ssl_pk_pem);
-        if (ret != NSAPI_ERROR_OK) return ret;
+        if (ssl_cli_pem != NULL && ssl_pk_pem != NULL) {
+            ret = socket->set_client_cert_key(ssl_cli_pem, ssl_pk_pem);
+            if (ret != NSAPI_ERROR_OK) return ret;
+        }
 
         return socket->connect(hostname, port);
     }
