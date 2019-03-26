@@ -1,36 +1,29 @@
 {
     "macros": [
-        "MBED_HEAP_STATS_ENABLED=1",
-        "MBED_STACK_STATS_ENABLED=1",
-        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1",
-        "MBEDTLS_SHA1_C"
+        "MBEDTLS_USER_CONFIG_FILE=\"mbedtls_azure_config.h\""
     ],
-    "config": {
-        "main-stack-size": {
-            "value": 8192
-        }
-    },
     "target_overrides": {
         "*": {
             "platform.stdio-baud-rate"                  : 115200,
             "platform.stdio-convert-newlines"           : true,
             "mbed-trace.enable"                         : true,
             "nsapi.default-wifi-security"               : "WPA_WPA2",
-            "nsapi.default-wifi-ssid"                   : "\"yolo 5GHz\"",
-            "nsapi.default-wifi-password"               : "\"0624710192\""
+            "nsapi.default-wifi-ssid"                   : "\"SSID\"",
+            "nsapi.default-wifi-password"               : "\"Password\""
         },
         "RZ_A1H": {
             "target.macros_add"                         : ["MBEDTLS_TEST_NULL_ENTROPY", "MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES"],
             "target.network-default-interface-type"     : "ETHERNET"
         },
         "DISCO_L475VG_IOT01A": {
-            "target.macros_remove"                      : ["MBED_TICKLESS"],
             "target.components_add"                     : ["WIFI_ISM43362"],
-            "target.network-default-interface-type"     : "WIFI"
+            "target.network-default-interface-type"     : "WIFI",
+            "ism43362.read-thread-stack-size"           : 2048
         },
         "DISCO_F413ZH": {
             "target.components_add"                     : ["WIFI_ISM43362"],
-            "target.network-default-interface-type"     : "WIFI"
+            "target.network-default-interface-type"     : "WIFI",
+            "ism43362.read-thread-stack-size"           : 2048
         }
     }
 }

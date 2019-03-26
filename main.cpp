@@ -1,29 +1,20 @@
-/*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corp.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v1.0 which accompany this distribution.
- *
- * The Eclipse Public License is available at
- *    http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at
- *   http://www.eclipse.org/org/documents/edl-v10.php.
- *
- * Contributors:
- *    Ian Craggs - initial API and implementation and/or initial documentation
- *    Ian Craggs - make sure QoS2 processing works, and add device headers
- *******************************************************************************/
-
- /**
-  This is a sample program to illustrate the use of the MQTT Client library
-  on the mbed platform.  The Client class requires two classes which mediate
-  access to system interfaces for networking and timing.  As long as these two
-  classes provide the required public programming interfaces, it does not matter
-  what facilities they use underneath. In this program, they use the mbed
-  system libraries.
-
- */
+// ----------------------------------------------------------------------------
+// Copyright 2016-2019 ARM Ltd.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------
 
 #define MQTTCLIENT_QOS1 0
 #define MQTTCLIENT_QOS2 0
@@ -63,24 +54,6 @@ char messageBuffer[MESSAGE_BUFFER_SIZE];
 void handleMqttMessage(MQTT::MessageData& md);
 void handleButtonRise();
 
-void print_memory_info() {
-    // allocate enough room for every thread's stack statistics
-    int cnt = osThreadGetCount();
-    mbed_stats_stack_t *stats = (mbed_stats_stack_t*) malloc(cnt * sizeof(mbed_stats_stack_t));
-
-    cnt = mbed_stats_stack_get_each(stats, cnt);
-    for (int i = 0; i < cnt; i++) {
-        printf("Thread: 0x%lX, Stack size: %lu / %lu\r\n", stats[i].thread_id, stats[i].max_size, stats[i].reserved_size);
-    }
-    free(stats);
-
-    // Grab the heap statistics
-    mbed_stats_heap_t heap_stats;
-    mbed_stats_heap_get(&heap_stats);
-    printf("Heap size: %lu / %lu bytes (max: %lu bytes)\r\n", heap_stats.current_size, heap_stats.reserved_size, heap_stats.max_size);
-}
-
-
 int main(int argc, char* argv[])
 {
     mbed_trace_init();
@@ -95,8 +68,6 @@ int main(int argc, char* argv[])
 
     printf("Mbed to Azure IoT Hub: version is %.2f\r\n", version);
     printf("\r\n");
-
-    print_memory_info();
 
     // Turns on green LED to indicate processing initialization process
     led_green = LED_ON;
@@ -126,8 +97,6 @@ int main(int argc, char* argv[])
         printf("Time is now %s", ctime(&now));
     }
 
-    print_memory_info();
-
     /* Establish a network connection. */
     MQTTNetwork* mqttNetwork = NULL;
     printf("Connecting to host %s:%d ...\r\n", MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT);
@@ -135,13 +104,13 @@ int main(int argc, char* argv[])
         mqttNetwork = new MQTTNetwork(network);
         int rc = mqttNetwork->connect(MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT, SSL_CA_PEM,
                 SSL_CLIENT_CERT_PEM, SSL_CLIENT_PRIVATE_KEY_PEM);
+        printf("mqttNetwork->connect %d\n", rc);
         if (rc != MQTT::SUCCESS){
             const int MAX_TLS_ERROR_CODE = -0x1000;
             // Network error
-            if((MAX_TLS_ERROR_CODE < rc) && (rc < 0)) {
-                // TODO: implement converting an error code into message.
-                printf("ERROR from MQTTNetwork connect is %d.", rc);
-            }
+            // TODO: implement converting an error code into message.
+            printf("ERROR from MQTTNetwork connect is %d\r\n", rc);
+#if defined(MBEDTLS_ERROR_C) || defined(MBEDTLS_ERROR_STRERROR_DUMMY)
             // TLS error - mbedTLS error codes starts from -0x1000 to -0x8000.
             if(rc <= MAX_TLS_ERROR_CODE) {
                 const int buf_size = 256;
@@ -149,6 +118,7 @@ int main(int argc, char* argv[])
                 mbedtls_strerror(rc, buf, buf_size);
                 printf("TLS ERROR (%d) : %s\r\n", rc, buf);
             }
+#endif
             return -1;
         }
     }
@@ -254,8 +224,6 @@ int main(int argc, char* argv[])
             printf("Message published.\r\n");
 
             count++;
-
-            print_memory_info();
 
             led_blue = LED_OFF;
         }
