@@ -1,5 +1,6 @@
 {
     "macros": [
+        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1",
         "MBEDTLS_USER_CONFIG_FILE=\"mbedtls_azure_config.h\""
     ],
     "target_overrides": {
