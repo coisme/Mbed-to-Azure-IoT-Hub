@@ -200,7 +200,8 @@
 
 #undef MBEDTLS_VERSION_FEATURES
 
-#undef MBEDTLS_DEBUG_C
+// You can disable debug as long as you disable MBED_CONF_TLS_SOCKET_DEBUG_LEVEL
+// #undef MBEDTLS_DEBUG_C
 
 #undef MBEDTLS_SHA512_C
 
