@@ -1,60 +1,30 @@
 {
     "macros": [
+        "MBED_CONF_TLS_SOCKET_DEBUG_LEVEL=1",
+        "MBEDTLS_USER_CONFIG_FILE=\"mbedtls_azure_config.h\""
     ],
-    "config": {
-        "main-stack-size": {
-            "value": 8192
-        },
-        "network-interface":{
-            "help": "options are ETHERNET, WIFI_ESP8266, WIFI_ODIN, WIFI_RTW, MESH_LOWPAN_ND, MESH_THREAD, CELLULAR_ONBOARD",
-            "value": "ETHERNET"
-        },
-        "mesh_radio_type": {
-            "help": "options are ATMEL, MCR20",
-            "value": "ATMEL"
-        },
-        "esp8266-tx": {
-            "help": "Pin used as TX (connects to ESP8266 RX)",
-            "value": "D1"
-        },
-        "esp8266-rx": {
-            "help": "Pin used as RX (connects to ESP8266 TX)",
-            "value": "D0"
-        },
-        "wifi-ssid": {
-            "value": "\"SSID\""
-        },
-        "wifi-password": {
-            "value": "\"PASSWORD\""
-        },
-        "esp8266-debug": {
-            "value": null
-        }
-    },
     "target_overrides": {
         "*": {
-            "target.features_add": ["NANOSTACK", "LOWPAN_ROUTER", "COMMON_PAL"],
-            "mbed-mesh-api.6lowpan-nd-channel-page": 0,
-            "mbed-mesh-api.6lowpan-nd-channel": 12,
-            "mbed-trace.enable": 0,
-            "tls-socket.debug-level": 0,
-            "platform.stdio-baud-rate": 115200,
-            "platform.stdio-convert-newlines": false
-           },
+            "platform.stdio-baud-rate"                  : 115200,
+            "platform.stdio-convert-newlines"           : true,
+            "mbed-trace.enable"                         : true,
+            "nsapi.default-wifi-security"               : "WPA_WPA2",
+            "nsapi.default-wifi-ssid"                   : "\"SSID\"",
+            "nsapi.default-wifi-password"               : "\"Password\""
+        },
         "RZ_A1H": {
-            "target.macros_add": ["MBEDTLS_TEST_NULL_ENTROPY", "MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES"]
-           },
-        "HEXIWEAR": {
-            "esp8266-tx": "PTD3",
-            "esp8266-rx": "PTD2"
+            "target.macros_add"                         : ["MBEDTLS_TEST_NULL_ENTROPY", "MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES"],
+            "target.network-default-interface-type"     : "ETHERNET"
         },
-        "NUCLEO_F401RE": {
-            "esp8266-tx": "D8",
-            "esp8266-rx": "D2"
+        "DISCO_L475VG_IOT01A": {
+            "target.components_add"                     : ["WIFI_ISM43362"],
+            "target.network-default-interface-type"     : "WIFI",
+            "ism43362.read-thread-stack-size"           : 2048
         },
-        "NUCLEO_F411RE": {
-            "esp8266-tx": "D8",
-            "esp8266-rx": "D2"
+        "DISCO_F413ZH": {
+            "target.components_add"                     : ["WIFI_ISM43362"],
+            "target.network-default-interface-type"     : "WIFI",
+            "ism43362.read-thread-stack-size"           : 2048
         }
     }
 }

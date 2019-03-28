@@ -1,10 +1,16 @@
 #ifndef __MQTT_SERVER_SETTING_H__
 #define __MQTT_SERVER_SETTING_H__
 
-const char* DEVICE_ID = "<< REPLACE WITH YOUR DEVICE ID >>";
+#define IOTHUB_AUTH_CLIENT_SIDE_CERT    1
+#define IOTHUB_AUTH_SYMMETRIC_KEY       2
 
-const char* MQTT_SERVER_HOST_NAME = "<< REPLACE WITH YOUR HOST NAME >>";
-const int MQTT_SERVER_PORT = 8883;
+// Set your authentication method here
+#define IOTHUB_AUTH_METHOD              IOTHUB_AUTH_CLIENT_SIDE_CERT
+
+#define DEVICE_ID                       "<< REPLACE WITH YOUR DEVICE ID >>"
+#define MQTT_SERVER_HOST_NAME           "<< REPLACE WITH YOUR HOST NAME >>"
+#define MQTT_SERVER_PASSWORD            "ignored"   // If you're using symmetric key authentication, set this to an SAS Token
+#define MQTT_SERVER_PORT                8883
 
 /*
  * Root CA certificate here in PEM format.
@@ -117,10 +123,9 @@ const char* SSL_CA_PEM =
 "J7x6v+Db9NpSvd4MVHAxkUOVyLzwPt0JfjBkUO1/AaQzZ01oT74V77D2AhGiGxMl\r\n"
 "OtzCWfHjXEa7ZywCRuoeSKbmW9m1vFGikpbbqsY3Iqb+zCB0oy2pLmvLwIIRIbWT\r\n"
 "ee5Ehr7XHuQe+w==\r\n"
-"-----END CERTIFICATE-----\r\n"
- 
-;
+"-----END CERTIFICATE-----\r\n";
 
+#if IOTHUB_AUTH_METHOD == IOTHUB_AUTH_CLIENT_SIDE_CERT
 
 /*
  * (optional) Client certificate here in PEM format.
@@ -139,4 +144,7 @@ const char* SSL_CLIENT_CERT_PEM = "<< REPLACE WITH YOUR CERT >>";
  * "-----END RSA PRIVATE KEY-----\n";
  */
 const char* SSL_CLIENT_PRIVATE_KEY_PEM = "<< REPLACE WITH YOUR KEY >>";
+
+#endif // IOTHUB_AUTH_METHOD == IOTHUB_AUTH_CLIENT_SIDE_CERT
+
 #endif /* __MQTT_SERVER_SETTING_H__ */
