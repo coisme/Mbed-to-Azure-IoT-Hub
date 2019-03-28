@@ -90,6 +90,10 @@ int main(int argc, char* argv[])
         NTPClient ntp(network);
         ntp.set_server("time.google.com", 123);
         time_t now = ntp.get_timestamp();
+        if (now <= 0) {
+            printf("Failed to retrieve the time from time.google.com:123\r\n");
+            return 1;
+        }
         set_time(now);
         printf("Time is now %s", ctime(&now));
     }
