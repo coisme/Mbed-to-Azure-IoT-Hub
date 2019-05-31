@@ -22,7 +22,7 @@
 /*! Size optimized TLS config to connect to Azure IoT Hub using RSA X.509 Certificates */
 
 /* Platform has time function to provide time for certificates verifications */
-#if 1 //Please set to 1 if you are using secure time
+#ifndef TOOLCHAIN_ARM //Please set to 1 if you are using secure time
 #ifndef MBEDTLS_HAVE_TIME
     #define MBEDTLS_HAVE_TIME
 #endif //MBEDTLS_HAVE_TIME
