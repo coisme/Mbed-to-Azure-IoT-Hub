@@ -20,9 +20,8 @@
 #define MQTTCLIENT_QOS2 0
 
 #include "mbed.h"
-#include "MQTTNetwork.h"
-#include "MQTTmbed.h"
-#include "MQTTClient.h"
+#include "TLSSocket.h"
+#include "MQTTClientMbedOs.h"
 #include "MQTT_server_setting.h"
 #include "mbed-trace/mbed_trace.h"
 #include "mbed_events.h"
@@ -99,30 +98,29 @@ int main(int argc, char* argv[])
     }
 
     /* Establish a network connection. */
-    MQTTNetwork* mqttNetwork = NULL;
+    TLSSocket *socket = new TLSSocket; // Allocate on heap to avoid stack overflow.
     printf("Connecting to host %s:%d ...\r\n", MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT);
     {
-        mqttNetwork = new MQTTNetwork(network);
-#if IOTHUB_AUTH_METHOD == IOTHUB_AUTH_SYMMETRIC_KEY
-        int rc = mqttNetwork->connect(MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT, SSL_CA_PEM);
-#elif IOTHUB_AUTH_METHOD == IOTHUB_AUTH_CLIENT_SIDE_CERT
-         int rc = mqttNetwork->connect(MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT, SSL_CA_PEM,
-                    SSL_CLIENT_CERT_PEM, SSL_CLIENT_PRIVATE_KEY_PEM);
+        nsapi_error_t ret = socket->open(network);
+        if (ret != NSAPI_ERROR_OK) {
+            printf("Could not open socket! Returned %d\n", ret);
+            return -1;
+        }
+        ret = socket->set_root_ca_cert(SSL_CA_PEM);
+        if (ret != NSAPI_ERROR_OK) {
+            printf("Could not set ca cert! Returned %d\n", ret);
+            return -1;
+        }
+#if IOTHUB_AUTH_METHOD == IOTHUB_AUTH_CLIENT_SIDE_CERT
+        ret = socket->set_client_cert_key(SSL_CLIENT_CERT_PEM, SSL_CLIENT_PRIVATE_KEY_PEM);
+        if (ret != NSAPI_ERROR_OK) {
+            printf("Could not set keys! Returned %d\n", ret);
+            return -1;
+        }
 #endif
-        if (rc != MQTT::SUCCESS) {
-            const int MAX_TLS_ERROR_CODE = -0x1000;
-            // Network error
-            // TODO: implement converting an error code into message.
-            printf("ERROR from MQTTNetwork connect is %d\r\n", rc);
-#if defined(MBEDTLS_ERROR_C) || defined(MBEDTLS_ERROR_STRERROR_DUMMY)
-            // TLS error - mbedTLS error codes starts from -0x1000 to -0x8000.
-            if(rc <= MAX_TLS_ERROR_CODE) {
-                const int buf_size = 256;
-                char *buf = new char[buf_size];
-                mbedtls_strerror(rc, buf, buf_size);
-                printf("TLS ERROR (%d) : %s\r\n", rc, buf);
-            }
-#endif
+        ret = socket->connect(MQTT_SERVER_HOST_NAME, MQTT_SERVER_PORT);
+        if (ret != NSAPI_ERROR_OK) {
+            printf("Could not connect! Returned %d\n", ret);
             return -1;
         }
     }
@@ -133,7 +131,7 @@ int main(int argc, char* argv[])
     const char *username = MQTT_SERVER_HOST_NAME "/" DEVICE_ID "/api-version=2016-11-14";
 
     /* Establish a MQTT connection. */
-    MQTT::Client<MQTTNetwork, Countdown, MQTT_MAX_PACKET_SIZE, MQTT_MAX_CONNECTIONS>* mqttClient = NULL;
+    MQTTClient* mqttClient = new MQTTClient(socket);
     printf("MQTT client is connecting to the service ...\r\n");
     {
         MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -142,7 +140,6 @@ int main(int argc, char* argv[])
         data.username.cstring = (char*)username;
         data.password.cstring = (char*)MQTT_SERVER_PASSWORD;
 
-        mqttClient = new MQTT::Client<MQTTNetwork, Countdown, MQTT_MAX_PACKET_SIZE, MQTT_MAX_CONNECTIONS>(*mqttNetwork);
         int rc = mqttClient->connect(data);
         if (rc != MQTT::SUCCESS) {
             printf("ERROR: rc from MQTT connect is %d\r\n", rc);
@@ -242,9 +239,9 @@ int main(int argc, char* argv[])
             mqttClient->disconnect();
         delete mqttClient;
     }
-    if(mqttNetwork) {
-        mqttNetwork->disconnect();
-        delete mqttNetwork;
+    if(socket) {
+        socket->close();
+        delete socket;
     }
     if(network) {
         network->disconnect();
