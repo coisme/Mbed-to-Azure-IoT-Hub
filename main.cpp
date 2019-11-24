@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 {
     mbed_trace_init();
 
-    const float version = 0.1;
+    const float version = 1.0;
 
     NetworkInterface* network = NULL;
 
@@ -64,6 +64,10 @@ int main(int argc, char* argv[])
 
     printf("Mbed to Azure IoT Hub: version is %.2f\r\n", version);
     printf("\r\n");
+
+#ifdef MBED_MAJOR_VERSION
+    printf("Mbed OS version %d.%d.%d\n\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+#endif
 
     // Turns on green LED to indicate processing initialization process
     led_green = LED_ON;
